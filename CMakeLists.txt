@@ -32,12 +32,22 @@ endif()
 
 # Set compile flags for gcc and clang
 if(UNIX)
-    set(CMAKE_CXX_FLAGS
-        "$ENV{CXXFLAGS} -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
-    set(CMAKE_CXX_FLAGS_RELEASE
-        "$ENV{CXXFLAGS} -O3 -fomit-frame-pointer -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
-    set(CMAKE_CXX_FLAGS_DEBUG
-        "$ENV{CXXFLAGS} -Og -fno-omit-frame-pointer -g -ggdb -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
+    # Mac Os Don`t use pthread to build this project
+    if(APPLE)
+        set(CMAKE_CXX_FLAGS
+                "$ENV{CXXFLAGS} -std=c++14 -Wall -Werror -Wold-style-cast")
+        set(CMAKE_CXX_FLAGS_RELEASE
+                "$ENV{CXXFLAGS} -O3 -fomit-frame-pointer -std=c++14 -Wall -Werror -Wold-style-cast")
+        set(CMAKE_CXX_FLAGS_DEBUG
+                "$ENV{CXXFLAGS} -O0 -fno-omit-frame-pointer -g -ggdb -std=c++14 -Wall -Werror -Wold-style-cast")
+    else()
+        set(CMAKE_CXX_FLAGS
+            "$ENV{CXXFLAGS} -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
+        set(CMAKE_CXX_FLAGS_RELEASE
+            "$ENV{CXXFLAGS} -O3 -fomit-frame-pointer -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
+        set(CMAKE_CXX_FLAGS_DEBUG
+            "$ENV{CXXFLAGS} -O0 -fno-omit-frame-pointer -g -ggdb -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
+    endif()
 endif()
 
 include_directories(

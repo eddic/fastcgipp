@@ -50,7 +50,10 @@ int main()
     manager.setupSignals();
     //! [Signals]
     //! [Listen]
+    //manager.listen("127.0.0.1", "9000"); // if you are using mac os try this instead, because was the only way i can make it work
     manager.listen();
+
+
     //! [Listen]
     //! [Start]
     manager.start();

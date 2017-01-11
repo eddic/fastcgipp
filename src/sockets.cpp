@@ -49,6 +49,11 @@
 #include <pwd.h>
 #include <grp.h>
 #include <cstring>
+#include <sys/poll.h>
+
+#ifndef MSG_NOSIGNAL
+    #define MSG_NOSIGNAL 0
+#endif
 
 Fastcgipp::Socket::Socket(
         const socket_t& socket,
@@ -464,7 +469,11 @@ Fastcgipp::Socket Fastcgipp::SocketGroup::poll(bool block)
     const auto& pollIn = POLLIN;
     const auto& pollErr = POLLERR;
     const auto& pollHup = POLLHUP;
-    const auto& pollRdHup = POLLRDHUP;
+    #if __APPLE__
+        const auto& pollRdHup = POLLERR;
+    #else
+        const auto& pollRdHup = POLLRDHUP;
+    #endif
 #endif
 
     while(m_listeners.size()+m_sockets.size() > 0)
@@ -661,7 +670,11 @@ bool Fastcgipp::SocketGroup::pollAdd(const socket_t socket)
 
     m_poll.emplace_back();
     m_poll.back().fd = socket;
-    m_poll.back().events = POLLIN | POLLRDHUP | POLLERR | POLLHUP;
+    #if __APPLE__
+        m_poll.back().events = POLLIN | POLLERR | POLLERR | POLLHUP;
+    #else
+        m_poll.back().events = POLLIN | POLLRDHUP | POLLERR | POLLHUP;
+    #endif
     return true;
 #endif
 }

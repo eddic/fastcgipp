@@ -40,6 +40,19 @@
 #include <limits.h>
 #include <sys/types.h>
 
+// Mac Os Don`t have the variable bellow.
+#if __APPLE__
+
+    #ifndef HOST_NAME_MAX
+        #define HOST_NAME_MAX 255
+    #endif
+
+    #ifndef program_invocation_name
+        #define program_invocation_name "fastcgi"
+    #endif
+
+#endif
+
 //! Topmost namespace for the fastcgi++ library
 namespace Fastcgipp
 {
