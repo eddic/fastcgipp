@@ -260,10 +260,16 @@ namespace Fastcgipp
 
             //! Character sets the clients accepts
             std::basic_string<charT> acceptCharsets;
-	  
+
+            //! CORS Access-Control-Request-Method
+            std::basic_string<charT> accessControlRequestMethod;
+
+            //! CORS Access-Control-Request-Headers
+            std::basic_string<charT> accessControlRequestHeaders;
+
             //! Http authorization string
             std::basic_string<charT> authorization;
-	  
+
             //! Referral URL
             std::basic_string<charT> referer;
 
