@@ -393,6 +393,9 @@ namespace Fastcgipp
 
             //! Parses "application/x-www-form-urlencoded" post data
             inline void parsePostsUrlEncoded();
+            
+            //! Parses "application/json" post data
+            inline void parsePostsJSON();
 
             //! Raw string of characters representing the post boundary
             std::vector<char> boundary;
