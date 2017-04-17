@@ -384,7 +384,9 @@ void Fastcgipp::Manager_base::push(Protocol::RequestId id, Message&& message)
 #endif
         std::unique_lock<std::shared_timed_mutex> lock(m_requestsMutex);
         auto request = m_requests.find(id);
-        if(request == m_requests.end())
+        if(request != m_requests.end())
+            request->second->push(std::move(message));
+        else
         {
             const Protocol::Header& header=
                 *reinterpret_cast<Protocol::Header*>(message.data.data());
@@ -415,8 +417,6 @@ void Fastcgipp::Manager_base::push(Protocol::RequestId id, Message&& message)
                         " doesn't exist")
             return;
         }
-        else
-            request->second->push(std::move(message));
     }
     std::lock_guard<std::mutex> lock(m_tasksMutex);
     m_tasks.push(id);
