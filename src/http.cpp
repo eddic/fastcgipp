@@ -422,6 +422,7 @@ template<class charT> bool Fastcgipp::Http::Environment<charT>::parsePostBuffer(
 {
     static const std::string multipartStr("multipart/form-data");
     static const std::string urlEncodedStr("application/x-www-form-urlencoded");
+    static const std::string JSONStr("application/json");
 
     if(!m_postBuffer.size())
         return true;
@@ -446,8 +447,34 @@ template<class charT> bool Fastcgipp::Http::Environment<charT>::parsePostBuffer(
         parsePostsUrlEncoded();
         parsed = true;
     }
+    else if(std::equal(
+                JSONStr.cbegin(),
+                JSONStr.cend(),
+                contentType.cbegin(),
+                contentType.cend()))
+    {
+        parsePostsJSON();
+        parsed = true;
+    }
 
     return parsed;
+}
+
+template void Fastcgipp::Http::Environment<char>::parsePostsJSON();
+template void Fastcgipp::Http::Environment<wchar_t>::parsePostsJSON();
+template<class charT>
+void Fastcgipp::Http::Environment<charT>::parsePostsJSON()
+{
+    std::basic_string<charT> value;
+    std::basic_string<charT> name;
+    std::vector<char> name_buffer;
+    name_buffer.push_back('d');
+    name_buffer.push_back('a');
+    name_buffer.push_back('t');
+    name_buffer.push_back('a');
+    vecToString(name_buffer.cbegin(), name_buffer.cend(), name);
+    vecToString(m_postBuffer.cbegin(), m_postBuffer.cend(), value);
+    posts.insert(std::make_pair(std::move(name),std::move(value)));
 }
 
 template void Fastcgipp::Http::Environment<char>::parsePostsMultipart();
