@@ -127,7 +127,8 @@ std::unique_lock<std::mutex>Fastcgipp::Request<charT>::handler()
                             goto exit;
                         }
 
-                        m_environment.clearPostBuffer();
+                        if (!inProcessor())
+                           m_environment.clearPostBuffer();
                         m_state = Protocol::RecordType::OUT;
                         break;
                     }
