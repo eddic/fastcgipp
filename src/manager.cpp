@@ -372,7 +372,9 @@ void Fastcgipp::Manager_base::push(Protocol::RequestId id, Message&& message)
 #endif
         std::unique_lock<std::shared_timed_mutex> lock(m_requestsMutex);
         auto request = m_requests.find(id);
-        if(request == m_requests.end())
+        if(request != m_requests.end())
+            request->second->push(std::move(message));
+        else if(!message.type)
         {
             if(message.type == 0)
             {
@@ -407,7 +409,7 @@ void Fastcgipp::Manager_base::push(Protocol::RequestId id, Message&& message)
             return;
         }
         else
-            request->second->push(std::move(message));
+            return;
     }
     std::lock_guard<std::mutex> lock(m_tasksMutex);
     m_tasks.push(id);
