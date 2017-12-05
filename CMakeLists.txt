@@ -39,7 +39,8 @@ if(UNIX)
         set(CMAKE_CXX_FLAGS_RELEASE
                 "$ENV{CXXFLAGS} -O3 -fomit-frame-pointer -std=c++14 -Wall -Werror -Wold-style-cast")
         set(CMAKE_CXX_FLAGS_DEBUG
-                "$ENV{CXXFLAGS} -O0 -fno-omit-frame-pointer -g -ggdb -std=c++14 -Wall -Werror -Wold-style-cast")
+          "$ENV{CXXFLAGS} -O0 -fno-omit-frame-pointer -g -ggdb -std=c++14 -Wall -Werror -Wold-style-cast")
+	set(CMAKE_MACOSX_RPATH ON)
     else()
         set(CMAKE_CXX_FLAGS
             "$ENV{CXXFLAGS} -std=c++14 -Wall -Werror -Wold-style-cast -pthread")
