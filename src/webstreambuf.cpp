@@ -2,7 +2,7 @@
  * @file       webstreambuf.cpp
  * @brief      Defines the WebStreambuf stuff
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 2, 2016
+ * @date       May 20, 2016
  * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
@@ -141,14 +141,6 @@ namespace Fastcgipp
     };
 }
 
-template
-std::streamsize Fastcgipp::WebStreambuf<char, std::char_traits<char> >::xsputn(
-        const char_type *s,
-        std::streamsize n);
-template
-std::streamsize Fastcgipp::WebStreambuf<wchar_t, std::char_traits<wchar_t> >::xsputn(
-        const char_type *s,
-        std::streamsize n);
 template <class charT, class traits>
 std::streamsize Fastcgipp::WebStreambuf<charT, traits>::xsputn(
         const char_type *s,
@@ -208,3 +200,6 @@ std::streamsize Fastcgipp::WebStreambuf<charT, traits>::xsputn(
 
     return n;
 }
+
+template class Fastcgipp::WebStreambuf<wchar_t, std::char_traits<wchar_t>>;
+template class Fastcgipp::WebStreambuf<char, std::char_traits<char>>;

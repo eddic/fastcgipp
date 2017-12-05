@@ -2,13 +2,13 @@
  * @file       manager.cpp
  * @brief      Defines the Manager class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       August 20, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 4, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -154,18 +154,18 @@ void Fastcgipp::Manager_base::localHandler()
     if(message.type == 0)
     {
         const Protocol::Header& header
-            = *reinterpret_cast<Protocol::Header*>(message.data.data());
+            = *reinterpret_cast<Protocol::Header*>(message.data.begin());
         switch(header.type)
         {
             case Protocol::RecordType::GET_VALUES:
             {
-                std::vector<char>::const_iterator name;
-                std::vector<char>::const_iterator value;
-                std::vector<char>::const_iterator end;
+                const char* name;
+                const char* value;
+                const char* end;
 
                 while(Protocol::processParamHeader(
-                        message.data.cbegin()+sizeof(header),
-                        message.data.cend(),
+                        message.data.begin()+sizeof(header),
+                        message.data.end(),
                         name,
                         value,
                         end))
@@ -176,14 +176,10 @@ void Fastcgipp::Manager_base::localHandler()
                         {
                             if(std::equal(name, value, "FCGI_MAX_CONNS"))
                             {
-                                std::vector<char> record(
+                                Block record(
+                                        reinterpret_cast<const char*>(
+                                            &Protocol::maxConnsReply),
                                         sizeof(Protocol::maxConnsReply));
-                                const char* const start
-                                    = reinterpret_cast<const char*>(
-                                            &Protocol::maxConnsReply);
-                                const char* end = start
-                                    +sizeof(Protocol::maxConnsReply);
-                                std::copy(start, end, record.begin());
                                 m_transceiver.send(
                                         socket,
                                         std::move(record),
@@ -195,14 +191,10 @@ void Fastcgipp::Manager_base::localHandler()
                         {
                             if(std::equal(name, value, "FCGI_MAX_REQS"))
                             {
-                                std::vector<char> record(
+                                Block record(
+                                        reinterpret_cast<const char*>(
+                                            &Protocol::maxReqsReply),
                                         sizeof(Protocol::maxReqsReply));
-                                const char* const start
-                                    = reinterpret_cast<const char*>(
-                                            &Protocol::maxReqsReply);
-                                const char* end = start
-                                    + sizeof(Protocol::maxReqsReply);
-                                std::copy(start, end, record.begin());
                                 m_transceiver.send(
                                         socket,
                                         std::move(record),
@@ -214,14 +206,10 @@ void Fastcgipp::Manager_base::localHandler()
                         {
                             if(std::equal(name, value, "FCGI_MPXS_CONNS"))
                             {
-                                std::vector<char> record(
+                                Block record(
+                                        reinterpret_cast<const char*>(
+                                            &Protocol::mpxsConnsReply),
                                         sizeof(Protocol::mpxsConnsReply));
-                                const char* const start
-                                    = reinterpret_cast<const char*>(
-                                            &Protocol::mpxsConnsReply);
-                                const char* end = start
-                                    + sizeof(Protocol::mpxsConnsReply);
-                                std::copy(start, end, record.begin());
                                 m_transceiver.send(
                                         socket,
                                         std::move(record),
@@ -236,12 +224,12 @@ void Fastcgipp::Manager_base::localHandler()
 
             default:
             {
-                std::vector<char> record(
+                Block record(
                         sizeof(Protocol::Header)
                         +sizeof(Protocol::UnknownType));
 
                 Protocol::Header& sendHeader
-                    = *reinterpret_cast<Protocol::Header*>(record.data());
+                    = *reinterpret_cast<Protocol::Header*>(record.begin());
                 sendHeader.version = Protocol::version;
                 sendHeader.type = Protocol::RecordType::UNKNOWN_TYPE;
                 sendHeader.fcgiId = 0;
@@ -250,7 +238,7 @@ void Fastcgipp::Manager_base::localHandler()
 
                 Protocol::UnknownType& sendBody
                     = *reinterpret_cast<Protocol::UnknownType*>(
-                            record.data()+sizeof(header));
+                            record.begin()+sizeof(header));
                 sendBody.type = header.type;
 
                 m_transceiver.send(socket, std::move(record), false);
@@ -386,33 +374,36 @@ void Fastcgipp::Manager_base::push(Protocol::RequestId id, Message&& message)
         auto request = m_requests.find(id);
         if(request == m_requests.end())
         {
-            const Protocol::Header& header=
-                *reinterpret_cast<Protocol::Header*>(message.data.data());
-            if(header.type == Protocol::RecordType::BEGIN_REQUEST)
+            if(message.type == 0)
             {
-                const Protocol::BeginRequest& body
-                    = *reinterpret_cast<Protocol::BeginRequest*>(
-                            message.data.data()
-                            +sizeof(header));
+                const Protocol::Header& header=
+                    *reinterpret_cast<Protocol::Header*>(message.data.begin());
+                if(header.type == Protocol::RecordType::BEGIN_REQUEST)
+                {
+                    const Protocol::BeginRequest& body
+                        = *reinterpret_cast<Protocol::BeginRequest*>(
+                                message.data.begin()
+                                +sizeof(header));
 
-                request = m_requests.emplace(
-                        std::piecewise_construct,
-                        std::forward_as_tuple(id),
-                        std::forward_as_tuple()).first;
+                    request = m_requests.emplace(
+                            std::piecewise_construct,
+                            std::forward_as_tuple(id),
+                            std::forward_as_tuple()).first;
 
-                request->second = makeRequest(
-                        id,
-                        body.role,
-                        body.kill());
-                lock.unlock();
+                    request->second = makeRequest(
+                            id,
+                            body.role,
+                            body.kill());
+                    lock.unlock();
 #if FASTCGIPP_LOG_LEVEL > 3
-                ++m_requestCount;
-                m_maxRequests = std::max(m_maxRequests, m_requests.size());
+                    ++m_requestCount;
+                    m_maxRequests = std::max(m_maxRequests, m_requests.size());
 #endif
+                }
+                else
+                    WARNING_LOG("Got a non BEGIN_REQUEST record for a request"\
+                            " that doesn't exist")
             }
-            else
-                WARNING_LOG("Got a non BEGIN_REQUEST record for a request that"\
-                        " doesn't exist")
             return;
         }
         else

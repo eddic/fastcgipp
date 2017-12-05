@@ -2,13 +2,13 @@
  * @file       transceiver.cpp
  * @brief      Defines the Fastcgipp::Transceiver class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       August 20, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -42,12 +42,12 @@ bool Fastcgipp::Transceiver::transmit()
         }
 
         const ssize_t sent = record->socket.write(
-                &*record->read,
-                record->data.cend()-record->read);
+                record->read,
+                record->data.end()-record->read);
         if(sent>=0)
         {
             record->read += sent;
-            if(record->read != record->data.cend())
+            if(record->read != record->data.end())
             {
                 {
                     std::lock_guard<std::mutex> lock(m_sendBufferMutex);
@@ -135,56 +135,51 @@ void Fastcgipp::Transceiver::receive(Socket& socket)
 {
     if(socket.valid())
     {
-        std::vector<char>& buffer=m_receiveBuffers[socket];
-        size_t received = buffer.size();
+        Block& buffer=m_receiveBuffers[socket];
 
         // Are we receiving a header?
-        if(received < sizeof(Protocol::Header))
+        if(buffer.size() < sizeof(Protocol::Header))
         {
-            buffer.resize(sizeof(Protocol::Header));
+            buffer.reserve(sizeof(Protocol::Header));
 
             const ssize_t read = socket.read(
-                    buffer.data()+received,
-                    buffer.size()-received);
+                    buffer.begin()+buffer.size(),
+                    buffer.reserve()-buffer.size());
             if(read<0)
             {
                 cleanupSocket(socket);
                 return;
             }
-            received += read;
-            if(received < sizeof(Protocol::Header))
-            {
-                buffer.resize(received);
+            buffer.size(buffer.size() + read);
+            if(buffer.size() < sizeof(Protocol::Header))
                 return;
-            }
         }
 
-        const size_t recordSize = sizeof(Protocol::Header)
-            +reinterpret_cast<Protocol::Header*>(buffer.data())->contentLength
-            +reinterpret_cast<Protocol::Header*>(buffer.data())->paddingLength;
-        buffer.resize(recordSize);
+        if(buffer.size() == sizeof(Protocol::Header))
+            buffer.reserve(sizeof(Protocol::Header)
+                +reinterpret_cast<Protocol::Header*>(
+                    buffer.begin())->contentLength
+                +reinterpret_cast<Protocol::Header*>(
+                    buffer.begin())->paddingLength);
 
         Protocol::Header& header
-            = *reinterpret_cast<Protocol::Header*>(buffer.data());
+            = *reinterpret_cast<Protocol::Header*>(buffer.begin());
 
         const ssize_t read = socket.read(
-                buffer.data()+received,
-                buffer.size()-received);
+                buffer.begin()+buffer.size(),
+                buffer.reserve()-buffer.size());
 
         if(read<0)
         {
             cleanupSocket(socket);
             return;
         }
-        received += read;
-        if(received < recordSize)
-        {
-            buffer.resize(received);
+        buffer.size(buffer.size() + read);
+        if(buffer.size() < buffer.reserve())
             return;
-        }
 
         Message message;
-        message.data.swap(buffer);
+        message.data = std::move(buffer);
 
         m_sendMessage(
                 Protocol::RequestId(header.fcgiId, socket),
@@ -209,7 +204,7 @@ void Fastcgipp::Transceiver::cleanupSocket(const Socket& socket)
 
 void Fastcgipp::Transceiver::send(
         const Socket& socket,
-        std::vector<char>&& data,
+        Block&& data,
         bool kill)
 {
     std::unique_ptr<Record> record(new Record(

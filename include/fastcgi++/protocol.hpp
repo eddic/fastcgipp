@@ -2,13 +2,13 @@
  * @file       protocol.hpp
  * @brief      Declares everything for relating to the FastCGI protocol itself.
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       August 20, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 10, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -30,7 +30,6 @@
 #define FASTCGIPP_PROTOCOL_HPP
 
 #include <memory>
-#include <type_traits>
 #include <cstdint>
 #include <algorithm>
 #include <map>
@@ -177,6 +176,21 @@ namespace Fastcgipp
             UNKNOWN_ROLE=3
         };
 
+        //! Get unsigned integral type from size
+        template<size_t Size> struct Unsigned;
+        template<> struct Unsigned<2>
+        {
+            typedef uint16_t Type;
+        };
+        template<> struct Unsigned<4>
+        {
+            typedef uint32_t Type;
+        };
+        template<> struct Unsigned<8>
+        {
+            typedef uint64_t Type;
+        };
+
         //! Allows raw storage of types in big endian format
         /*!
          * This templated class allows any integral based (enumerations
@@ -185,17 +199,21 @@ namespace Fastcgipp
          *
          * @tparam T Type to emulate. Must be either an integral type or an
          *           enumeration who's underlying type is integral.
-         * @date    August 20, 2016
+         * @date    May 10, 2017
          * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
          */
         template<typename T> class BigEndian
         {
         private:
+            static const size_t size = sizeof(T);
+            static_assert(size==2 || size==4 || size==8, "Fastcgipp::Protocol::"
+                    "BigEndian can only work with types of size 2, 4 or 8.");
+
             //! Underlying unsigned integral type.
-            typedef typename std::make_unsigned<T>::type BaseType;
+            typedef typename Unsigned<size>::Type BaseType;
 
             //! The raw data of the big endian integer
-            unsigned char m_data[sizeof(T)];
+            unsigned char m_data[size];
 
             //! Set the internal data to the passed parameter.
             void set(T x)
@@ -206,9 +224,9 @@ namespace Fastcgipp
                     T actual;
                 };
                 actual = x;
-                for(unsigned int i=0; i<sizeof(T); ++i)
+                for(unsigned int i=0; i<size; ++i)
                     m_data[i] = static_cast<unsigned char>(
-                            0xff & base>>8*(sizeof(T)-1-i));
+                            0xff & base>>8*(size-1-i));
             }
 
         public:
@@ -223,7 +241,7 @@ namespace Fastcgipp
                 set(x);
             }
 
-            BigEndian()
+            constexpr BigEndian()
             {}
 
             operator T() const
@@ -237,7 +255,7 @@ namespace Fastcgipp
              * endian format and cast it into type T.
              *
              * @param [in] source Pointer to start of data. This data should of
-             *                    course be at minimum sizeof(T).
+             *                    course be at minimum size.
              */
             static T read(const unsigned char* source)
             {
@@ -248,9 +266,9 @@ namespace Fastcgipp
                 };
                 base = 0;
 
-                for(unsigned int i=0; i<sizeof(T); ++i)
+                for(unsigned int i=0; i<size; ++i)
                     base |= static_cast<BaseType>(*(source+i))
-                        << 8*(sizeof(T)-1-i);
+                        << 8*(size-1-i);
 
                 return actual;
             }
@@ -398,11 +416,11 @@ namespace Fastcgipp
          * @return False if out of bounds. True otherwise.
          */
         bool processParamHeader(
-                std::vector<char>::const_iterator data,
-                const std::vector<char>::const_iterator dataEnd,
-                std::vector<char>::const_iterator& name,
-                std::vector<char>::const_iterator& value,
-                std::vector<char>::const_iterator& end);
+                const char* data,
+                const char* const dataEnd,
+                const char*& name,
+                const char*& value,
+                const char*& end);
 
         //! For the reply of FastCGI management records
         /*!

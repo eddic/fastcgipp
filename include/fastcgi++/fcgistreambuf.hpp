@@ -2,13 +2,13 @@
  * @file       fcgistreambuf.hpp
  * @brief      Declares the FcgiStreambuf class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 6, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       June 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -31,8 +31,10 @@
 
 #include "fastcgi++/protocol.hpp"
 #include "fastcgi++/webstreambuf.hpp"
+#include "fastcgi++/block.hpp"
 
 #include <istream>
+#include <functional>
 
 //! Topmost namespace for the fastcgi++ library
 namespace Fastcgipp
@@ -46,7 +48,7 @@ namespace Fastcgipp
      * @tparam charT Character type (char or wchar_t)
      * @tparam traits Character traits
      *
-     * @date    August 20, 2016
+     * @date    May 3, 2017
      * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
      */
     template <class charT, class traits = std::char_traits<charT>>
@@ -70,7 +72,7 @@ namespace Fastcgipp
         void configure(
                 const Protocol::RequestId& id,
                 const Protocol::RecordType& type,
-                const std::function<void(const Socket&, std::vector<char>&&)>
+                const std::function<void(const Socket&, Block&&)>
                     send_)
         {
             m_id = id;
@@ -134,7 +136,7 @@ namespace Fastcgipp
         Protocol::RecordType m_type;
 
         //! Function to actually send the record
-        std::function<void(const Socket&, std::vector<char>&&)> send;
+        std::function<void(const Socket&, Block&&)> send;
     };
 }
 

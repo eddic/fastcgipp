@@ -2,13 +2,13 @@
  * @file       log.hpp
  * @brief      Declares the Fastcgipp debugging/logging facilities
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 18, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 4, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -111,7 +111,7 @@ namespace Fastcgipp
         *::Fastcgipp::Logging::logstream << data << std::endl;\
     }
 #else
-#define ERROR_LOG(data)
+#define ERROR_LOG(data) {}
 #endif
 
 #if FASTCGIPP_LOG_LEVEL > 1
@@ -129,7 +129,7 @@ namespace Fastcgipp
         *::Fastcgipp::Logging::logstream << data << std::endl;\
     }}
 #else
-#define WARNING_LOG(data)
+#define WARNING_LOG(data) {}
 #endif
 
 #if FASTCGIPP_LOG_LEVEL > 2
@@ -142,7 +142,7 @@ namespace Fastcgipp
         *::Fastcgipp::Logging::logstream << data << std::endl;\
     }}
 #else
-#define DEBUG_LOG(data)
+#define DEBUG_LOG(data) {}
 #endif
 
 #if FASTCGIPP_LOG_LEVEL > 3
@@ -155,7 +155,7 @@ namespace Fastcgipp
         *::Fastcgipp::Logging::logstream << data << std::endl;\
     }}
 #else
-#define DIAG_LOG(data)
+#define DIAG_LOG(data) {}
 #endif
 
 #endif

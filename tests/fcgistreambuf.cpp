@@ -2,7 +2,6 @@
 #include "fastcgi++/fcgistreambuf.hpp"
 
 #include <ostream>
-#include <vector>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -11,13 +10,13 @@ unsigned called;
 
 const Fastcgipp::Protocol::FcgiId FCGIID = 2006;
 
-void checker(const Fastcgipp::Socket& socket, std::vector<char>&& record)
+void checker(const Fastcgipp::Socket& socket, Fastcgipp::Block&& record)
 {
     if(record.size() % Fastcgipp::Protocol::chunkSize)
         FAIL_LOG("Our record is not sized properly");
 
     const Fastcgipp::Protocol::Header& header
-        = *reinterpret_cast<Fastcgipp::Protocol::Header*>(record.data());
+        = *reinterpret_cast<Fastcgipp::Protocol::Header*>(record.begin());
 
     if(header.fcgiId != FCGIID)
         FAIL_LOG("Our FcgiId doesn't match")
@@ -32,7 +31,7 @@ void checker(const Fastcgipp::Socket& socket, std::vector<char>&& record)
     {
         case 0:
         {
-            const std::vector<unsigned char> body
+            const unsigned char body[] =
             {
                 0x49, 0x6e, 0x20, 0x62, 0x6f, 0x74, 0x61, 0x6e, 0x79, 0x2c,
                 0x20, 0x61, 0x20, 0x74, 0x72, 0x65, 0x65, 0x20, 0x69, 0x73,
@@ -209,10 +208,14 @@ void checker(const Fastcgipp::Socket& socket, std::vector<char>&& record)
                 0x65, 0x73, 0x74, 0x25, 0x33, 0x45, 0x25, 0x32, 0x30, 0x6f,
                 0x75, 0x74, 0x25, 0x32, 0x35, 0x2e
             };
+            static const char* const bodyStart =
+                reinterpret_cast<const char*>(body);
+            static const char* const bodyEnd =
+                reinterpret_cast<const char*>(body+sizeof(body));
 
             if(!std::equal(
-                        reinterpret_cast<const char*>(&*body.cbegin()),
-                        reinterpret_cast<const char*>(&*body.cend()),
+                        bodyStart,
+                        bodyEnd,
                         record.begin()+sizeof(header),
                         record.begin()+sizeof(header)+header.contentLength))
                 FAIL_LOG("Our body isn't right on try " << called);
@@ -296,7 +299,6 @@ void checker(const Fastcgipp::Socket& socket, std::vector<char>&& record)
     }
 
     record.clear();
-    record.shrink_to_fit();
     ++called;
 }
 

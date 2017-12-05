@@ -35,11 +35,11 @@ enum class Kill: char
 struct Echo
 {
     Fastcgipp::Protocol::RequestId id;
-    std::vector<char> data;
+    Fastcgipp::Block data;
 
     Echo(
             Fastcgipp::Protocol::RequestId id_,
-            std::vector<char>&& data_):
+            Fastcgipp::Block&& data_):
         id(id_),
         data(std::move(data_))
     {}
@@ -79,7 +79,7 @@ void echo()
             echoQueue.pop();
             lock.unlock();
 
-            const Kill& killer = *reinterpret_cast<Kill*>(echo.data.data()
+            const Kill& killer = *reinterpret_cast<Kill*>(echo.data.begin()
                     +sizeof(Fastcgipp::Protocol::Header));
             transceiver.send(
                     echo.id.m_socket,

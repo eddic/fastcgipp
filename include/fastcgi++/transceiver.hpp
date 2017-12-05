@@ -2,13 +2,13 @@
  * @file       transceiver.hpp
  * @brief      Declares the Fastcgipp::Transceiver class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 18, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -41,6 +41,7 @@
 #include <thread>
 
 #include <fastcgi++/protocol.hpp>
+#include "fastcgi++/block.hpp"
 
 //! Topmost namespace for the fastcgi++ library
 namespace Fastcgipp
@@ -51,7 +52,7 @@ namespace Fastcgipp
      * level sockets and also the creation/destruction of the sockets
      * themselves.
      *
-     * @date    August 20, 2016
+     * @date    May 4, 2017
      * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
      */
     class Transceiver
@@ -102,7 +103,7 @@ namespace Fastcgipp
          * @param[in] kill True if the socket should be closed once everything
          *                 is sent.
          */
-        void send(const Socket& socket, std::vector<char>&& data, bool kill);
+        void send(const Socket& socket, Block&& data, bool kill);
 
         //! Constructor
         /*!
@@ -174,23 +175,23 @@ namespace Fastcgipp
 
     private:
         //! Container associating sockets with their receive buffers
-        std::map<Socket, std::vector<char>> m_receiveBuffers;
+        std::map<Socket, Block> m_receiveBuffers;
 
         //! Simple FastCGI record to queue up for transmission
         struct Record
         {
             const Socket socket;
-            const std::vector<char> data;
-            std::vector<char>::const_iterator read;
+            const Block data;
+            const char* read;
             const bool kill;
 
             Record(
                     const Socket& socket_,
-                    std::vector<char>&& data_,
+                    Block&& data_,
                     bool kill_):
                 socket(socket_),
                 data(std::move(data_)),
-                read(data.cbegin()),
+                read(data.begin()),
                 kill(kill_)
             {}
         };

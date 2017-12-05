@@ -2,13 +2,13 @@
  * @file       http.hpp
  * @brief      Declares elements of the HTTP protocol
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       August 20, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -59,7 +59,7 @@ namespace Fastcgipp
          * @tparam charT Type of character to use in the value string (char or
          *               wchar_t)
          *
-         * @date    August 20, 2016
+         * @date    May 3, 2017
          * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
          */
         template<class charT> struct File
@@ -70,13 +70,17 @@ namespace Fastcgipp
             //! Content Type
             std::basic_string<charT> contentType;
 
+            //! Size of file
+            size_t size;
+
             //! File data
-            mutable std::vector<char> data;
+            mutable std::unique_ptr<char[]> data;
 
             //! Move constructor
             File(File&& x):
                 filename(std::move(x.filename)),
                 contentType(std::move(x.contentType)),
+                size(x.size),
                 data(std::move(x.data))
             {}
 
@@ -241,7 +245,7 @@ namespace Fastcgipp
          *
          * @tparam charT Character type to use for strings
          *
-         * @date    August 20, 2016
+         * @date    May 3, 2017
          * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
          */
         template<class charT> struct Environment
@@ -340,8 +344,8 @@ namespace Fastcgipp
              * @param[in] dataEnd 1+ the last byte of parameter data
              */
             void fill(
-                    std::vector<char>::const_iterator data,
-                    const std::vector<char>::const_iterator dataEnd);
+                    const char* data,
+                    const char* dataEnd);
 
             //! Consolidates POST data into a single buffer
             /*!
@@ -352,8 +356,8 @@ namespace Fastcgipp
              * @param[in] end 1+ the last byte of post data
              */
             void fillPostBuffer(
-                    const std::vector<char>::const_iterator start,
-                    const std::vector<char>::const_iterator end);
+                    const char* start,
+                    const char* end);
 
             //! Attempts to parse the POST buffer
             /*!
@@ -401,15 +405,15 @@ namespace Fastcgipp
             std::vector<char> m_postBuffer;
         };
 
-        //! Convert a char vector to a std::wstring
+        //! Convert a char array to a std::wstring
         /*!
-         * @param[in] start First byte in char vector
-         * @param[in] end 1+ last byte of the vector (no null terminator)
+         * @param[in] start First byte in char array
+         * @param[in] end 1+ last byte of the array (no null terminator)
          * @param[out] string Reference to the wstring that should be modified
          */
         void vecToString(
-                std::vector<char>::const_iterator start,
-                std::vector<char>::const_iterator end,
+                const char* start,
+                const char* end,
                 std::wstring& string);
 
         //! Convert a char string to a std::string
@@ -419,8 +423,8 @@ namespace Fastcgipp
          * @param[out] string Reference to the string that should be modified
          */
         inline void vecToString(
-                std::vector<char>::const_iterator start,
-                std::vector<char>::const_iterator end,
+                const char* start,
+                const char* end,
                 std::string& string)
         {
             string.assign(start, end);
@@ -464,8 +468,8 @@ namespace Fastcgipp
          * @param[in] fieldSeparator String that signifies field separation
          */
         template<class charT> void decodeUrlEncoded(
-                std::vector<char>::const_iterator data,
-                const std::vector<char>::const_iterator dataEnd,
+                const char* data,
+                const char* dataEnd,
                 std::multimap<
                     std::basic_string<charT>,
                     std::basic_string<charT>>& output,
@@ -486,10 +490,10 @@ namespace Fastcgipp
          *                         converted string to
          * @return Iterator to +1 the last character written
          */
-        std::vector<char>::iterator percentEscapedToRealBytes(
-                std::vector<char>::const_iterator start,
-                std::vector<char>::const_iterator end,
-                std::vector<char>::iterator destination);
+        char* percentEscapedToRealBytes(
+                const char* start,
+                const char* end,
+                char* destination);
 
         //! List of characters in order for Base64 encoding.
         extern const std::array<const char, 64> base64Characters;
@@ -722,7 +726,7 @@ Out Fastcgipp::Http::base64Decode(In start, In end, Out destination)
 {
     Out dest=destination;
 
-    for(int buffer, bitPos=-8, padStart; start!=end || bitPos>-6; ++dest)
+    for(int buffer=0, bitPos=-8, padStart=0; start!=end || bitPos>-6; ++dest)
     {
         if(bitPos==-8)
         {

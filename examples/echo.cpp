@@ -170,13 +170,13 @@ L"<html>"
                 << Encoding::NONE << L"<br />"
             L"<b>Content Type:</b> " << Encoding::HTML
                 << file.second.contentType << Encoding::NONE << L"<br />"
-            L"<b>Size:</b> " << file.second.data.size() << L"<br />"
+            L"<b>Size:</b> " << file.second.size << L"<br />"
             L"<b>Data:</b>"
         L"</p>"
         L"<pre>";
                 //! [Files]
                 //! [Dump]
-                dump(file.second.data.data(), file.second.data.size());
+                dump(file.second.data.get(), file.second.size);
                 out <<
         L"</pre>";
             }

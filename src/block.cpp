@@ -1,6 +1,6 @@
 /*!
- * @file       protocol.cpp
- * @brief      Defines everything for relating to the FastCGI protocol itself.
+ * @file       block.cpp
+ * @brief      Defines the Block data structure.
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
  * @date       May 3, 2017
  * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
@@ -26,66 +26,89 @@
 * along with fastcgi++.  If not, see <http://www.gnu.org/licenses/>.           *
 *******************************************************************************/
 
-#include "fastcgi++/protocol.hpp"
-#include "fastcgi++/config.hpp"
+#include "fastcgi++/block.hpp"
+#include <algorithm>
 
-bool Fastcgipp::Protocol::processParamHeader(
-        const char* data,
-        const char* const dataEnd,
-        const char*& name,
-        const char*& value,
-        const char*& end)
+void Fastcgipp::Block::reserve(size_t x)
 {
-    size_t nameSize;
-    size_t valueSize;
-
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
+    if(x != m_reserve)
     {
-        const auto size=data;
-        data += sizeof(uint32_t);
+        std::unique_ptr<char[]> data(new char[x]);
+        size_t newSize = std::min(m_size, x);
+        std::copy(
+                m_data.get(),
+                m_data.get()+newSize,
+                data.get());
 
-        if(data>dataEnd)
-            return false;
+        m_reserve = x;
+        m_size = newSize;
+        m_data = std::move(data);
 
-        nameSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
     }
-    else
-        nameSize=*data++;
-
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
-    {
-        const auto size=data;
-        data += sizeof(uint32_t);
-
-        if(data>dataEnd)
-            return false;
-
-        valueSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
-    }
-    else
-        valueSize=*data++;
-
-    name = data;
-    value = name+nameSize;
-    end = value+valueSize;
-
-    if(end>dataEnd)
-        return false;
-    else
-        return true;
 }
 
-const Fastcgipp::Protocol::ManagementReply<14, 2>
-Fastcgipp::Protocol::maxConnsReply("FCGI_MAX_CONNS", "10");
+Fastcgipp::Block::Block():
+    m_reserve(0),
+    m_size(0)
+{}
 
-const Fastcgipp::Protocol::ManagementReply<13, 2>
-Fastcgipp::Protocol::maxReqsReply("FCGI_MAX_REQS", "50");
+Fastcgipp::Block::Block(const size_t size_):
+    m_reserve(size_),
+    m_size(size_),
+    m_data(new char[size_])
+{}
 
-const Fastcgipp::Protocol::ManagementReply<15, 1>
-Fastcgipp::Protocol::mpxsConnsReply("FCGI_MPXS_CONNS", "1");
+Fastcgipp::Block::Block(const char* const data, const size_t size_):
+    m_reserve(size_),
+    m_size(size_),
+    m_data(new char[size_])
+{
+    std::copy(data, data+size_, m_data.get());
+}
 
-const char Fastcgipp::version[]=FASTCGIPP_VERSION;
+Fastcgipp::Block::Block(Block&& x):
+    m_reserve(x.m_reserve),
+    m_size(x.m_size),
+    m_data(std::move(x.m_data))
+{
+    x.m_reserve = 0;
+    x.m_size = 0;
+}
+
+Fastcgipp::Block& Fastcgipp::Block::operator=(Block&& x)
+{
+    m_reserve = x.m_reserve;
+    x.m_reserve = 0;
+    m_size = x.m_size;
+    x.m_size = 0;
+    m_data = std::move(x.m_data);
+    return *this;
+}
+
+void Fastcgipp::Block::size(size_t x)
+{
+    if(x > m_reserve)
+    {
+        m_size = m_reserve;
+        reserve(x);
+    }
+    m_size = x;
+}
+
+void Fastcgipp::Block::clear()
+{
+    m_reserve = 0;
+    m_size = 0;
+    m_data.reset();
+}
+
+void Fastcgipp::Block::assign(const char* const data, const size_t size_)
+{
+    if(size_ > m_reserve)
+    {
+        m_data.reset(new char[size_]);
+        m_reserve = size_;
+    }
+    m_size = size_;
+    std::copy(data, data+size_, m_data.get());
+}

@@ -386,45 +386,35 @@ int main()
 
     // Test Fastcgipp::Http::percentEscapedToRealBytes()
     {
-        const char properDecodedString[] =
+        const char properDecoded[] =
             "E#H8i*H8!TkuxIGQya7bd^b%(JcEfkT5h#1qPift#VXDONNPhEUg_XYsH(if*7wz";
-        const std::vector<char> properDecoded(
-                properDecodedString,
-                properDecodedString+sizeof(properDecodedString)-1);
 
-        const char encodedString[] =
+        const char encoded[] =
             "E%23H8i*H8!TkuxIGQya7bd%5Eb%25(JcEfkT5h%231qPift%23VXDONNPhEUg_XYs"
             "H(if*7wz";
-        const std::vector<char> encoded(
-                encodedString,
-                encodedString+sizeof(encodedString)-1);
-
-        std::vector<char> decoded(encoded.size());
+        std::unique_ptr<char[]> decoded(new char[sizeof(encoded)-1]);
 
         auto end = Fastcgipp::Http::percentEscapedToRealBytes(
-                encoded.cbegin(),
-                encoded.cend(),
-                decoded.begin());
+                encoded,
+                encoded+sizeof(encoded)-1,
+                decoded.get());
 
         if(!std::equal(
-                    decoded.begin(),
+                    decoded.get(),
                     end,
-                    properDecoded.cbegin(),
-                    properDecoded.cend()))
+                    properDecoded,
+                    properDecoded+sizeof(properDecoded)-1))
             FAIL_LOG("Fastcgipp::Http::percentEscapedToRealBytes()")
     }
 
     // Testing Fastcgipp::Http::decodeUrlEncoded()
     {
-        const char inputString[] =
+        const char input[] =
             "%268c2LuPm=ccPd%5E92c%24Qd_1ab41hq%5EHDjHp!t!NJBa"
             "&9cIZvi%25-gGtqSQbo=!Llm_0-4Eo-KlIyL"
             "&unicode=%D0%B6%D0%B8%D0%B2%D0%BE%D1%82%D0%BD%D0%BE%D0%B5"
             "&unicode=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3"
             "%83%88";
-        const std::vector<char> input(
-                inputString,
-                inputString+sizeof(inputString)-1);
 
         std::multimap<std::wstring, std::wstring> properOutput;
         properOutput.insert(std::pair<std::wstring, std::wstring>(
@@ -442,8 +432,8 @@ int main()
 
         std::multimap<std::wstring, std::wstring> output;
         Fastcgipp::Http::decodeUrlEncoded(
-                input.cbegin(),
-                input.cend(),
+                input,
+                input+sizeof(input)-1,
                 output);
 
         if(output != properOutput)
@@ -494,14 +484,11 @@ int main()
             Fastcgipp::Http::Environment<wchar_t> environment;
             {
                 {
-                    const unsigned char multipartParam[] = 
+                    const unsigned char parms[] = 
 #include "multipartParam.hpp"
-                    std::vector<char> parms(
-                            multipartParam,
-                            multipartParam+sizeof(multipartParam));
                     environment.fill(
-                            parms.cbegin(),
-                            parms.cend());
+                            reinterpret_cast<const char*>(parms),
+                            reinterpret_cast<const char*>(parms+sizeof(parms)-1));
                 }
 
                 // Check parameters
@@ -552,18 +539,20 @@ int main()
 
                 // Checking posts
                 {
-                    static const unsigned char multipartPost[] = 
+                    static const unsigned char data[] = 
 #include "multipartPost.hpp"
-                    std::vector<char> data(
-                            multipartPost,
-                            multipartPost+sizeof(multipartPost));
-                    auto halfPoint = data.cbegin()+data.size()/2;
+                    static const char* const dataStart =
+                        reinterpret_cast<const char*>(data);
+                    static const char* const halfPoint =
+                        reinterpret_cast<const char*>(data+sizeof(data)/2);
+                    static const char* const dataEnd =
+                        reinterpret_cast<const char*>(data+sizeof(data));
                     environment.fillPostBuffer(
-                            data.cbegin(),
+                            dataStart,
                             halfPoint);
                     environment.fillPostBuffer(
                             halfPoint,
-                            data.cend());
+                            dataEnd);
                     environment.parsePostBuffer();
                 }
                 if(properPosts != environment.posts)
@@ -581,13 +570,14 @@ int main()
                                 != L"gnu.png" ||
                             environment.files.begin()->second.contentType
                                 != L"image/png" ||
-                            environment.files.begin()->second.data.size() != 58587 ||
+                            environment.files.begin()->second.size != 58587 ||
                             !std::equal(
                                 reinterpret_cast<const char*>(gnu_png),
                                 reinterpret_cast<const char*>(gnu_png)
                                     +sizeof(gnu_png),
-                                environment.files.begin()->second.data.cbegin(),
-                                environment.files.begin()->second.data.cend()))
+                                environment.files.begin()->second.data.get(),
+                                environment.files.begin()->second.data.get()
+                                    +environment.files.begin()->second.size))
                         FAIL_LOG("Fastcgipp::Http::Environment multipart "\
                                 "files didn't decode properly")
                 }
@@ -599,14 +589,15 @@ int main()
             Fastcgipp::Http::Environment<wchar_t> environment;
             {
                 {
-                    static const unsigned char urlencodedParam[] = 
+                    static const unsigned char data[] = 
 #include "urlencodedParam.hpp"
-                    std::vector<char> parms(
-                            urlencodedParam,
-                            urlencodedParam+sizeof(urlencodedParam));
+                    static const char* const dataStart =
+                        reinterpret_cast<const char*>(data);
+                    static const char* const dataEnd =
+                        reinterpret_cast<const char*>(data+sizeof(data));
                     environment.fill(
-                            parms.cbegin(),
-                            parms.cend());
+                            dataStart,
+                            dataEnd);
                 }
 
                 properPosts.insert(std::pair<std::wstring, std::wstring>(
@@ -666,18 +657,20 @@ int main()
 
                 // Checking posts
                 {
-                    const unsigned char urlencodedPost[] = 
+                    const unsigned char data[] = 
 #include "urlencodedPost.hpp"
-                    std::vector<char> data(
-                            urlencodedPost,
-                            urlencodedPost+sizeof(urlencodedPost));
-                    auto halfPoint = data.cbegin()+data.size()/2;
+                    static const char* const dataStart =
+                        reinterpret_cast<const char*>(data);
+                    static const char* const halfPoint =
+                        reinterpret_cast<const char*>(data+sizeof(data)/2);
+                    static const char* const dataEnd =
+                        reinterpret_cast<const char*>(data+sizeof(data));
                     environment.fillPostBuffer(
-                            data.cbegin(),
+                            dataStart,
                             halfPoint);
                     environment.fillPostBuffer(
                             halfPoint,
-                            data.cend());
+                            dataEnd);
                     environment.parsePostBuffer();
                 }
                 if(properPosts != environment.posts)

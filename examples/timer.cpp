@@ -152,9 +152,8 @@ private:
             Fastcgipp::Message message;
             message.type = 1;
 
-            static const char messageText[]
-                = "I was passed between threads!!";
-            message.data.assign(messageText, messageText+sizeof(messageText)-1);
+            static const char messageText[] = "I was passed between threads!!";
+            message.data.assign(messageText, sizeof(messageText)-1);
 
             s_stopwatch.push(
                     callback(),

@@ -2,13 +2,13 @@
  * @file       message.hpp
  * @brief      Defines the Message data structure.
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       April 24, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -29,7 +29,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
-#include <vector>
+#include "fastcgi++/block.hpp"
 
 namespace Fastcgipp
 {
@@ -72,7 +72,7 @@ namespace Fastcgipp
         int type;
 
         //! The raw data being passed along with the message.
-        std::vector<char> data;
+        Block data;
     };
 }
 

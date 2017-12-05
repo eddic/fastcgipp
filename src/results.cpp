@@ -1,8 +1,8 @@
 /*!
- * @file       protocol.cpp
- * @brief      Defines everything for relating to the FastCGI protocol itself.
+ * @file       results.cpp
+ * @brief      Defines SQL results types
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 3, 2017
+ * @date       May 13, 2017
  * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
@@ -26,66 +26,34 @@
 * along with fastcgi++.  If not, see <http://www.gnu.org/licenses/>.           *
 *******************************************************************************/
 
-#include "fastcgi++/protocol.hpp"
-#include "fastcgi++/config.hpp"
+#include "fastcgi++/sql/results.hpp"
 
-bool Fastcgipp::Protocol::processParamHeader(
-        const char* data,
-        const char* const dataEnd,
-        const char*& name,
-        const char*& value,
-        const char*& end)
+Fastcgipp::SQL::Status Fastcgipp::SQL::Results_base::status() const
 {
-    size_t nameSize;
-    size_t valueSize;
+    if(m_res == nullptr)
+        return Status::noResult;
 
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
+    switch(PQresultStatus(m_res))
     {
-        const auto size=data;
-        data += sizeof(uint32_t);
-
-        if(data>dataEnd)
-            return false;
-
-        nameSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
-    }
-    else
-        nameSize=*data++;
-
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
-    {
-        const auto size=data;
-        data += sizeof(uint32_t);
-
-        if(data>dataEnd)
-            return false;
-
-        valueSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
-    }
-    else
-        valueSize=*data++;
-
-    name = data;
-    value = name+nameSize;
-    end = value+valueSize;
-
-    if(end>dataEnd)
-        return false;
-    else
-        return true;
+        case PGRES_EMPTY_QUERY:
+            return Status::emptyQuery;
+        case PGRES_COMMAND_OK:
+            return Status::commandOk;
+        case PGRES_TUPLES_OK:
+            return Status::rowsOk;
+        case PGRES_COPY_OUT:
+            return Status::copyOut;
+        case PGRES_COPY_IN:
+            return Status::copyIn;
+        case PGRES_BAD_RESPONSE:
+            return Status::badResponse;
+        case PGRES_NONFATAL_ERROR:
+            return Status::nonfatalError;
+        case PGRES_COPY_BOTH:
+            return Status::copyBoth;
+        case PGRES_SINGLE_TUPLE:
+            return Status::singleTuple;
+        default:
+            return Status::fatalError;
+    };
 }
-
-const Fastcgipp::Protocol::ManagementReply<14, 2>
-Fastcgipp::Protocol::maxConnsReply("FCGI_MAX_CONNS", "10");
-
-const Fastcgipp::Protocol::ManagementReply<13, 2>
-Fastcgipp::Protocol::maxReqsReply("FCGI_MAX_REQS", "50");
-
-const Fastcgipp::Protocol::ManagementReply<15, 1>
-Fastcgipp::Protocol::mpxsConnsReply("FCGI_MPXS_CONNS", "1");
-
-const char Fastcgipp::version[]=FASTCGIPP_VERSION;

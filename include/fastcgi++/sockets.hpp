@@ -2,8 +2,8 @@
  * @file       sockets.hpp
  * @brief      Declares everything for interfaces with OS level sockets.
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 18, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       April 27, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  *
  * It is this file, along with sockets.cpp, that must be modified to make
@@ -13,7 +13,7 @@
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -39,6 +39,8 @@
 #include <mutex>
 #include <set>
 #include <atomic>
+#include <deque>
+#include <string>
 
 #include "fastcgi++/config.hpp"
 
@@ -279,7 +281,7 @@ namespace Fastcgipp
      * <em>The only part of this class that is safe to call from multiple
      * threads is the wake() function.</em>
      *
-     * @date    August 20, 2016
+     * @date    April 27, 2017
      * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
      */
     class SocketGroup
@@ -449,6 +451,9 @@ namespace Fastcgipp
 
         //! Remove a socket identifier to the poll list
         bool pollDel(const socket_t socket);
+
+        //! Filenames to cleanup when we're done
+        std::deque<std::string> m_filenames;
 
 #if FASTCGIPP_LOG_LEVEL > 3
         //! Debug counter for incoming connections

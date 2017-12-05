@@ -1,8 +1,8 @@
 /*!
- * @file       protocol.cpp
- * @brief      Defines everything for relating to the FastCGI protocol itself.
+ * @file       parameters.cpp
+ * @brief      Defines SQL parameters types
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 3, 2017
+ * @date       May 13, 2017
  * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
@@ -26,66 +26,32 @@
 * along with fastcgi++.  If not, see <http://www.gnu.org/licenses/>.           *
 *******************************************************************************/
 
-#include "fastcgi++/protocol.hpp"
-#include "fastcgi++/config.hpp"
+#include "fastcgi++/sql/parameters.hpp"
 
-bool Fastcgipp::Protocol::processParamHeader(
-        const char* data,
-        const char* const dataEnd,
-        const char*& name,
-        const char*& value,
-        const char*& end)
+#include <locale>
+#include <codecvt>
+
+void Fastcgipp::SQL::Parameters_base::build()
 {
-    size_t nameSize;
-    size_t valueSize;
-
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
-    {
-        const auto size=data;
-        data += sizeof(uint32_t);
-
-        if(data>dataEnd)
-            return false;
-
-        nameSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
-    }
-    else
-        nameSize=*data++;
-
-    if(data>=dataEnd)
-        return false;
-    if(*data & 0x80)
-    {
-        const auto size=data;
-        data += sizeof(uint32_t);
-
-        if(data>dataEnd)
-            return false;
-
-        valueSize=BigEndian<uint32_t>::read(&*size) & 0x7fffffff;
-    }
-    else
-        valueSize=*data++;
-
-    name = data;
-    value = name+nameSize;
-    end = value+valueSize;
-
-    if(end>dataEnd)
-        return false;
-    else
-        return true;
+    const size_t columns = size();
+    m_raws.clear();
+    m_raws.reserve(columns);
+    m_sizes.clear();
+    m_sizes.reserve(columns);
+    build_impl();
 }
 
-const Fastcgipp::Protocol::ManagementReply<14, 2>
-Fastcgipp::Protocol::maxConnsReply("FCGI_MAX_CONNS", "10");
-
-const Fastcgipp::Protocol::ManagementReply<13, 2>
-Fastcgipp::Protocol::maxReqsReply("FCGI_MAX_REQS", "50");
-
-const Fastcgipp::Protocol::ManagementReply<15, 1>
-Fastcgipp::Protocol::mpxsConnsReply("FCGI_MPXS_CONNS", "1");
-
-const char Fastcgipp::version[]=FASTCGIPP_VERSION;
+Fastcgipp::SQL::Parameter<std::string>&
+Fastcgipp::SQL::Parameter<std::string>::operator=(const std::wstring& x)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    try
+    {
+        m_data = converter.to_bytes(x);
+    }
+    catch(const std::range_error& e)
+    {
+        WARNING_LOG("Error in code conversion to utf8 in SQL parameter")
+    }
+    return *this;
+}

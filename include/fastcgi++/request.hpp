@@ -2,13 +2,13 @@
  * @file       request.hpp
  * @brief      Declares the Request class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       August 20, 2016
- * @copyright  Copyright &copy; 2016 Eddie Carle. This project is released under
+ * @date       May 3, 2017
+ * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2016 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -94,7 +94,7 @@ namespace Fastcgipp
      *
      * @tparam charT Character type for internal processing (wchar_t or char)
      *
-     * @date    August 20, 2016
+     * @date    May 3, 2017
      * @author  Eddie Carle &lt;eddie@isatec.ca&gt;
      */
     template<class charT> class Request: public Request_base
@@ -140,7 +140,7 @@ namespace Fastcgipp
                 const Protocol::RequestId& id,
                 const Protocol::Role& role,
                 bool kill,
-                const std::function<void(const Socket&, std::vector<char>&&, bool)>
+                const std::function<void(const Socket&, Block&&, bool)>
                     send,
                 const std::function<void(Message)> callback);
 
@@ -195,7 +195,7 @@ namespace Fastcgipp
          * void callback(Message msg);
          *
          * The sole parameter is a Message that contains both a type value for
-         * processing by response() and a vector for some data.
+         * processing by response() and a Block for some data.
          */
         const std::function<void(Message)>& callback() const
         {
@@ -355,7 +355,7 @@ namespace Fastcgipp
         void complete();
 
         //! Function to actually send the record
-        std::function<void(const Socket&, std::vector<char>&&, bool kill)> m_send;
+        std::function<void(const Socket&, Block&&, bool kill)> m_send;
 
         //! Status to end the request with
         Protocol::ProtocolStatus m_status;
