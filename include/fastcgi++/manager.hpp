@@ -172,6 +172,12 @@ namespace Fastcgipp
         //! Pass a message to a request
         void push(Protocol::RequestId id, Message&& message);
 
+
+        //! Thread safe our local messages
+        std::mutex m_messagesMutex;
+        //! Local messages
+        std::queue<std::pair<Message, Socket>> m_messages;
+
     protected:
         //! Make a request object
         virtual std::unique_ptr<Request_base> makeRequest(
@@ -182,6 +188,7 @@ namespace Fastcgipp
         //! Handles low level communication with the other side
         Transceiver m_transceiver;
 
+        
     private:
         //! Queue for pending tasks
         std::queue<Protocol::RequestId> m_tasks;
@@ -195,11 +202,7 @@ namespace Fastcgipp
         //! Thread safe our requests
         std::shared_timed_mutex m_requestsMutex;
 
-        //! Local messages
-        std::queue<std::pair<Message, Socket>> m_messages;
-
-        //! Thread safe our local messages
-        std::mutex m_messagesMutex;
+        
 
         //! General handling function to have it's own thread
         void handler();

@@ -623,8 +623,8 @@ void Fastcgipp::Http::Environment<charT>::parsePostsUrlEncoded()
             posts);
 }
 
-template class Fastcgipp::Http::Environment<char>;
-template class Fastcgipp::Http::Environment<wchar_t>;
+template struct Fastcgipp::Http::Environment<char>;
+template struct Fastcgipp::Http::Environment<wchar_t>;
 
 Fastcgipp::Http::SessionId::SessionId()
 {

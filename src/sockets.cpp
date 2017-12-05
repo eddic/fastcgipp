@@ -652,10 +652,10 @@ void Fastcgipp::SocketGroup::createSocket(const socket_t listener)
         close(socket);
 }
 
-Fastcgipp::Socket::Socket():
-    m_data(new Data(-1, false, *static_cast<SocketGroup*>(nullptr))),
-    m_original(false)
-{}
+// Fastcgipp::Socket::Socket():
+//         m_data(nullptr),
+//         m_original(false)
+// {}
 
 bool Fastcgipp::SocketGroup::pollAdd(const socket_t socket)
 {

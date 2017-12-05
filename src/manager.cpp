@@ -139,20 +139,20 @@ void Fastcgipp::Manager_base::signalHandler(int signum)
         }
     }
 }
-
-void Fastcgipp::Manager_base::localHandler()
-{
+static Fastcgipp::Socket buildSocket(Fastcgipp::Manager_base* manager,
+                                     Fastcgipp::Message& message){
+    std::lock_guard<std::mutex> lock(manager->m_messagesMutex);
+    message = std::move(manager->m_messages.front().first);
+    Fastcgipp::Socket socket = manager->m_messages.front().second;
+    manager->m_messages.pop();
+    return socket;
+}
+void Fastcgipp::Manager_base::localHandler(){
     Message message;
-    Socket socket;
-    {
-        std::lock_guard<std::mutex> lock(m_messagesMutex);
-        message = std::move(m_messages.front().first);
-        socket = m_messages.front().second;
-        m_messages.pop();
-    }
+    Socket socket = buildSocket(this,message);
 
-    if(message.type == 0)
-    {
+
+    if(message.type == 0){
         const Protocol::Header& header
             = *reinterpret_cast<Protocol::Header*>(message.data.begin());
         switch(header.type)
