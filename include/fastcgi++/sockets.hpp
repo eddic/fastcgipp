@@ -251,7 +251,7 @@ namespace Fastcgipp
         //! Returns true if this socket is still open and capable of read/write.
         bool valid() const
         {
-            return m_data->m_valid;
+            return m_data && m_data->m_valid;
         }
 
         //! Call this to close the socket
