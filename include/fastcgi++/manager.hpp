@@ -299,8 +299,8 @@ namespace Fastcgipp
         {
             using namespace std::placeholders;
 
-            std::unique_ptr<Request_base> request(new RequestT);
-            static_cast<RequestT&>(*request).configure(
+            std::unique_ptr<RequestT> request(new RequestT);
+            request->configure(
                     id,
                     role,
                     kill,
