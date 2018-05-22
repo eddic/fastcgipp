@@ -209,7 +209,7 @@ void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
             record.size()-header.contentLength-sizeof(Protocol::Header);
 
         send(m_id.m_socket, std::move(record));
-    } while(stream.gcount() < maxContentLength);
+    } while(stream);
 }
 
 template class Fastcgipp::FcgiStreambuf<wchar_t, std::char_traits<wchar_t>>;
