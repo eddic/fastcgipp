@@ -389,6 +389,14 @@ template<class charT> void Fastcgipp::Http::Environment<charT>::fill(
                 ifModifiedSince = std::mktime(&time) - timezone;
             }
             break;
+        case 34:
+            if(std::equal(name, value, "HTTP_ACCESS_CONTROL_REQUEST_METHOD"))
+                vecToString(value, end, accessControlRequestMethod);
+            break;
+        case 35:
+            if(std::equal(name, value, "HTTP_ACCESS_CONTROL_REQUEST_HEADERS"))
+                vecToString(value, end, accessControlRequestHeaders);
+            break;
         }
         data = end;
     }
