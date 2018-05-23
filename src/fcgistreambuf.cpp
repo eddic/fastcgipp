@@ -32,6 +32,15 @@
 #include <codecvt>
 #include <algorithm>
 
+static size_t record_size(size_t s)
+{
+	const auto chunkSize = Fastcgipp::Protocol::chunkSize;
+	if(s >= 0xfff8)
+		s = 0xfff8;
+	else
+		s = (s + chunkSize - 1) / chunkSize * chunkSize;
+	return sizeof(Fastcgipp::Protocol::Header) + s;
+}
 namespace Fastcgipp
 {
     template <> bool
@@ -47,10 +56,7 @@ namespace Fastcgipp
 
         while((count = this->pptr() - this->pbase()) != 0)
         {
-            record.reserve(sizeof(Protocol::Header)
-                    +std::min(static_cast<size_t>(0xffffU),
-                        (count*converter.max_length()+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize));
+            record.reserve(record_size(count*converter.max_length()));
 
             Protocol::Header& header
                 = *reinterpret_cast<Protocol::Header*>(record.begin());
@@ -72,8 +78,7 @@ namespace Fastcgipp
                 return false;
             }
             pbump(-(fromNext - this->pbase()));
-            record.size((toNext-record.begin()+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize);
+            record.size(record_size(std::distance(record.begin(), toNext)));
 
             header.version = Protocol::version;
             header.type = m_type;
@@ -97,10 +102,7 @@ namespace Fastcgipp
 
         while((count = this->pptr() - this->pbase()) != 0)
         {
-            record.size(sizeof(Protocol::Header)
-                    +std::min(static_cast<size_t>(0xffffU),
-                        (count+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize));
+            record.size(record_size(count));
 
             Protocol::Header& header
                 = *reinterpret_cast<Protocol::Header*>(record.begin());
@@ -150,10 +152,7 @@ void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
 
     while(size != 0)
     {
-        record.size(sizeof(Protocol::Header)
-                +std::min(static_cast<size_t>(0xffffU),
-                    (size+Protocol::chunkSize-1)
-                    /Protocol::chunkSize*Protocol::chunkSize));
+        record.size(record_size(size));
 
         Protocol::Header& header
             = *reinterpret_cast<Protocol::Header*>(record.begin());
@@ -183,7 +182,7 @@ template <class charT, class traits>
 void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
         std::basic_istream<char>& stream)
 {
-    const ssize_t maxContentLength = 0xffff;
+    const ssize_t maxContentLength = 0xfff8;
     emptyBuffer();
     Block record;
 
@@ -199,10 +198,7 @@ void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
         if(header.contentLength == 0)
             break;
 
-        record.size((header.contentLength
-                    +sizeof(Protocol::Header)
-                    +Protocol::chunkSize-1)
-                /Protocol::chunkSize*Protocol::chunkSize);
+        record.size(record_size(header.contentLength));
 
         header.version = Protocol::version;
         header.type = m_type;
