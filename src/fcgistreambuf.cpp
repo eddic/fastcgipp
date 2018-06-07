@@ -2,7 +2,7 @@
  * @file       fcgistreambuf.cpp
  * @brief      Defines the FcgiStreambuf class
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 22, 2018
+ * @date       May 30, 2018
  * @copyright  Copyright &copy; 2018 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
@@ -47,10 +47,8 @@ namespace Fastcgipp
 
         while((count = this->pptr() - this->pbase()) != 0)
         {
-            record.reserve(sizeof(Protocol::Header)
-                    +std::min(static_cast<size_t>(0xffffU),
-                        (count*converter.max_length()+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize));
+            record.reserve(
+                    Protocol::getRecordSize(count*converter.max_length()));
 
             Protocol::Header& header
                 = *reinterpret_cast<Protocol::Header*>(record.begin());
@@ -72,14 +70,14 @@ namespace Fastcgipp
                 return false;
             }
             pbump(-(fromNext - this->pbase()));
-            record.size((toNext-record.begin()+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize);
+            header.contentLength = std::distance(
+                    record.begin()+sizeof(Protocol::Header),
+                    toNext);
+            record.size(Protocol::getRecordSize(header.contentLength));
 
             header.version = Protocol::version;
             header.type = m_type;
             header.fcgiId = m_id.m_id;
-            header.contentLength =
-                toNext-record.begin()-sizeof(Protocol::Header);
             header.paddingLength =
                 record.size()-header.contentLength-sizeof(Protocol::Header);
 
@@ -97,16 +95,13 @@ namespace Fastcgipp
 
         while((count = this->pptr() - this->pbase()) != 0)
         {
-            record.size(sizeof(Protocol::Header)
-                    +std::min(static_cast<size_t>(0xffffU),
-                        (count+Protocol::chunkSize-1)
-                        /Protocol::chunkSize*Protocol::chunkSize));
+            record.size(Protocol::getRecordSize(count));
 
             Protocol::Header& header
                 = *reinterpret_cast<Protocol::Header*>(record.begin());
             header.contentLength = std::min(
                     count,
-                    record.size()-sizeof(Protocol::Header));
+                    static_cast<size_t>(0xffffU));
 
             std::copy(
                     this->pbase(),
@@ -150,16 +145,11 @@ void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
 
     while(size != 0)
     {
-        record.size(sizeof(Protocol::Header)
-                +std::min(static_cast<size_t>(0xffffU),
-                    (size+Protocol::chunkSize-1)
-                    /Protocol::chunkSize*Protocol::chunkSize));
+        record.size(Protocol::getRecordSize(size));
 
         Protocol::Header& header
             = *reinterpret_cast<Protocol::Header*>(record.begin());
-        header.contentLength = std::min(
-                size,
-                record.size()-sizeof(Protocol::Header));
+        header.contentLength = std::min(size, static_cast<size_t>(0xffffU));
 
         std::copy(
                 data,
@@ -183,13 +173,13 @@ template <class charT, class traits>
 void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
         std::basic_istream<char>& stream)
 {
-    const ssize_t maxContentLength = 0xffff;
+    const size_t maxContentLength = 0xffffU;
     emptyBuffer();
     Block record;
 
     while(true)
     {
-        record.reserve(sizeof(Protocol::Header) + maxContentLength);
+        record.reserve(Protocol::getRecordSize(maxContentLength));
 
         Protocol::Header& header
             = *reinterpret_cast<Protocol::Header*>(record.begin());
@@ -199,10 +189,7 @@ void Fastcgipp::FcgiStreambuf<charT, traits>::dump(
         if(header.contentLength == 0)
             break;
 
-        record.size((header.contentLength
-                    +sizeof(Protocol::Header)
-                    +Protocol::chunkSize-1)
-                /Protocol::chunkSize*Protocol::chunkSize);
+        record.size(Protocol::getRecordSize(header.contentLength));
 
         header.version = Protocol::version;
         header.type = m_type;
