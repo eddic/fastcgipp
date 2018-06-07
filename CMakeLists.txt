@@ -22,7 +22,8 @@ set(TESTS
     "http"
     "sockets"
     "transceiver"
-    "fcgistreambuf")
+    "fcgistreambuf"
+    "endian")
 set(EXAMPLES
     "helloworld"
     "echo"
@@ -85,6 +86,7 @@ install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/include/fastcgi++/sockets.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/fastcgi++/transceiver.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/fastcgi++/webstreambuf.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/fastcgi++/endian.hpp"
     DESTINATION "include/fastcgi++")
 
 # Build the library itself

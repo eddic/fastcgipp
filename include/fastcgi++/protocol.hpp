@@ -35,6 +35,7 @@
 #include <map>
 #include <vector>
 
+#include "fastcgi++/endian.hpp"
 #include "fastcgi++/message.hpp"
 #include "fastcgi++/sockets.hpp"
 
@@ -191,61 +192,6 @@ namespace Fastcgipp
             typedef uint64_t Type;
         };
 
-        constexpr void fromBigEndian(const unsigned char* arr, std::uint16_t& v) noexcept
-        {
-            v = static_cast<std::uint16_t>(
-                std::uint16_t{arr[0]} << 8 |
-                std::uint16_t{arr[1]} << 0);
-        }
-
-        constexpr void fromBigEndian(const unsigned char* arr, std::uint32_t& v) noexcept
-        {
-            v = static_cast<std::uint32_t>(
-                std::uint32_t{arr[0]} << 24 |
-                std::uint32_t{arr[1]} << 16 |
-                std::uint32_t{arr[2]} << 8 |
-                std::uint32_t{arr[3]} << 0);
-        }
-
-        constexpr void fromBigEndian(const unsigned char* arr, std::uint64_t& v) noexcept
-        {
-            v = static_cast<std::uint64_t>(
-                std::uint64_t{arr[0]} << 56 |
-                std::uint64_t{arr[1]} << 48 |
-                std::uint64_t{arr[2]} << 40 |
-                std::uint64_t{arr[3]} << 32 |
-                std::uint64_t{arr[4]} << 24 |
-                std::uint64_t{arr[5]} << 16 |
-                std::uint64_t{arr[6]} << 8 |
-                std::uint64_t{arr[7]} << 0);
-        }
-        constexpr void toBigEndian(unsigned char* arr, const unsigned char v)
-        {
-            arr[0] = v;
-        }
-        constexpr void toBigEndian(unsigned char* arr, const std::uint16_t v)
-        {
-            arr[0] = static_cast<unsigned char>((v & 0xff00) >> 8);
-            arr[1] = static_cast<unsigned char>((v & 0x00ff) >> 0);
-        }
-        constexpr void toBigEndian(unsigned char* arr, const std::uint32_t v)
-        {
-            arr[0] = static_cast<unsigned char>((v & 0xff000000) >> 24);
-            arr[1] = static_cast<unsigned char>((v & 0x00ff0000) >> 16);
-            arr[2] = static_cast<unsigned char>((v & 0x0000ff00) >> 8);
-            arr[3] = static_cast<unsigned char>((v & 0x000000ff) >> 0);
-        }
-        constexpr void toBigEndian(unsigned char* arr, const std::uint64_t v)
-        {
-            arr[0] = static_cast<unsigned char>((v & 0xff00000000000000) >> 56);
-            arr[1] = static_cast<unsigned char>((v & 0x00ff000000000000) >> 48);
-            arr[2] = static_cast<unsigned char>((v & 0x0000ff0000000000) >> 40);
-            arr[3] = static_cast<unsigned char>((v & 0x000000ff00000000) >> 32);
-            arr[4] = static_cast<unsigned char>((v & 0x00000000ff000000) >> 24);
-            arr[5] = static_cast<unsigned char>((v & 0x0000000000ff0000) >> 16);
-            arr[6] = static_cast<unsigned char>((v & 0x000000000000ff00) >> 8);
-            arr[7] = static_cast<unsigned char>((v & 0x00000000000000ff) >> 0);
-        }
         //! Allows raw storage of types in big endian format
         /*!
          * This templated class allows any integral based (enumerations
@@ -268,16 +214,12 @@ namespace Fastcgipp
             typedef typename Unsigned<size>::Type BaseType;
 
             //! The raw data of the big endian integer
-            unsigned char m_data[size];
+            BaseType m_data = 0;
 
             //! Set the internal data to the passed parameter.
-            constexpr void set(T x) noexcept
+            constexpr void set(BaseType x) noexcept
             {
-                union {
-                    BaseType base;
-                    T actual;
-                } u = {.actual = x};
-                toBigEndian(m_data, u.base);
+                m_data = toBigEndian(x);
             }
 
         public:
@@ -297,12 +239,12 @@ namespace Fastcgipp
 
             constexpr operator T() const noexcept
             {
-                return read(m_data);
+                return static_cast<T>(fromBigEndian(m_data));
             }
 
             //! Static function for reading the value out of a data array.
             /*!
-             * This will read the value out of an unsigned char array in big
+             * This will read the value out of an std::uint8_t array in big
              * endian format and cast it into type T.
              *
              * @param [in] source Pointer to start of data. This data should of
@@ -312,16 +254,18 @@ namespace Fastcgipp
             {
                 union {
                     BaseType base;
-                    T actual;
-                } u = {.base = 0 };
-                fromBigEndian(source, u.base);
-                return u.actual;
+                    std::uint8_t actual[sizeof(T)];
+                } u = { .base = 0};
+                for(auto& b : u.actual)
+                    b = *source++;
+                return static_cast<T>(fromBigEndian(u.base));
             }
 
-            //! Simply casts char to unsigned char.
+            //! Simply casts char to std::uint8_t.
             static constexpr T read(const char* source) noexcept
             {
-                return read(reinterpret_cast<const unsigned char*>(source));
+                return read(static_cast<const unsigned char*>(
+                    static_cast<const void*>(source)));
             }
         };
 
