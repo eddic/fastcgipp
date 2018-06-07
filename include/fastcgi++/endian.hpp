@@ -144,15 +144,15 @@ namespace Fastcgipp
     constexpr U toBigEndian(U v, OtherEndianTag) noexcept
     {
         union {
-            U i;
+            U u;
             std::uint8_t b[sizeof(U)];
-        } ret = { .i = 0 };
-        for(int i = sizeof(U); i != 0; )
+        } ret = { .u = 0 };
+        for(unsigned i = sizeof(U); i != 0; )
         {
             ret.b[--i] = static_cast<std::uint8_t>(v & 0xff);
             v >>= 8;
         }
-        return ret.i;
+        return ret.u;
     }
     template<class U,
         typename = typename std::enable_if<
@@ -181,16 +181,16 @@ namespace Fastcgipp
     template<class U,
         typename = typename std::enable_if<
             detail::IsByteSwappable<U>::value>::type>
-    constexpr U fromBigEndian(U u, OtherEndianTag) noexcept
+    constexpr U fromBigEndian(U v, OtherEndianTag) noexcept
     {
         union {
-            U i;
+            U u;
             std::uint8_t b[sizeof(U)];
-        } un = { .i = u };
+        } un = { .u = v };
         U ret = 0;
-        for(int i = 0; i < sizeof(U); ++i)
+        for(unsigned i = 0; i < sizeof(U); ++i)
             ret = (ret << 8) | un.b[i];
-        return ret.i;
+        return ret;
     }
     template<class U,
         typename = typename std::enable_if<
