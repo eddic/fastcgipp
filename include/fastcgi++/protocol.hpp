@@ -214,12 +214,16 @@ namespace Fastcgipp
             typedef typename Unsigned<size>::Type BaseType;
 
             //! The raw data of the big endian integer
-            BaseType m_data = 0;
+            union BaseUnion {
+                BaseType base;
+                T type;
+            } m_data { .base = 0 };
 
             //! Set the internal data to the passed parameter.
-            constexpr void set(BaseType x) noexcept
+            constexpr void set(T x) noexcept
             {
-                m_data = toBigEndian(x);
+                m_data.type = x;
+                m_data.base = toBigEndian(m_data.base);
             }
 
         public:
@@ -239,7 +243,7 @@ namespace Fastcgipp
 
             constexpr operator T() const noexcept
             {
-                return static_cast<T>(fromBigEndian(m_data));
+                return BaseUnion{ .base = fromBigEndian(m_data.base)}.type;
             }
 
             //! Static function for reading the value out of a data array.
@@ -258,7 +262,7 @@ namespace Fastcgipp
                 } u = { .base = 0};
                 for(auto& b : u.actual)
                     b = *source++;
-                return static_cast<T>(fromBigEndian(u.base));
+                return BaseUnion{ .base = fromBigEndian(u.base)}.type;
             }
 
             //! Simply casts char to std::uint8_t.
