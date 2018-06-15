@@ -2,13 +2,13 @@
  * @file       protocol.hpp
  * @brief      Declares everything for relating to the FastCGI protocol itself.
  * @author     Eddie Carle &lt;eddie@isatec.ca&gt;
- * @date       May 10, 2017
- * @copyright  Copyright &copy; 2017 Eddie Carle. This project is released under
+ * @date       May 30, 2018
+ * @copyright  Copyright &copy; 2018 Eddie Carle. This project is released under
  *             the GNU Lesser General Public License Version 3.
  */
 
 /*******************************************************************************
-* Copyright (C) 2017 Eddie Carle [eddie@isatec.ca]                             *
+* Copyright (C) 2018 Eddie Carle [eddie@isatec.ca]                             *
 *                                                                              *
 * This file is part of fastcgi++.                                              *
 *                                                                              *
@@ -489,6 +489,16 @@ namespace Fastcgipp
                 header.paddingLength= paddingLength;
             }
         };
+
+        //! Determine the optimal record size given a requested content length
+        /*!
+         * Of course the maximum content length is in fact 0xffff bytes so any
+         * passed content length >0xffff will be assumed 0xffff.
+         *
+         * @param[in] contentLength Desired content length in record
+         * @return Length of record including content, header and padding.
+         */
+        size_t getRecordSize(size_t contentLength);
 
         //! The maximum allowed file descriptors open at a time
         extern const ManagementReply<14, 2> maxConnsReply;
