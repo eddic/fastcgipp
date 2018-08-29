@@ -154,6 +154,10 @@ namespace Fastcgipp
         {
             return m_environment;
         }
+        Http::Environment<charT>& environment()
+        {
+            return m_environment;
+        }
 
         //! Standard output stream to the client
         std::basic_ostream<charT> out;
