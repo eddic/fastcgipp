@@ -154,6 +154,10 @@ namespace Fastcgipp
         {
             return m_environment;
         }
+        Http::Environment<charT>& environment()
+        {
+            return m_environment;
+        }
 
         //! Accessor for the HTTP environment data
         Http::Environment<charT>& environment()
