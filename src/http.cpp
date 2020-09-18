@@ -412,6 +412,9 @@ template<class charT> void Fastcgipp::Http::Environment<charT>::fill(
             else
                 processed=false;
             break;
+        default:
+            processed=false;
+            break;
         }
         if(!processed)
         {
