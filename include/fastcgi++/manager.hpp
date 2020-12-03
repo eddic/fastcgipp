@@ -37,6 +37,7 @@
 #include <shared_mutex>
 #include <memory>
 #include <functional>
+#include <condition_variable>
 
 #include "fastcgi++/protocol.hpp"
 #include "fastcgi++/transceiver.hpp"
