@@ -187,11 +187,12 @@ Fastcgipp::SocketGroup::~SocketGroup()
 static void set_reuse(int sock)
 {
 #if defined(FASTCGIPP_LINUX) || defined(FASTCGIPP_UNIX)
+    int x = 1;
     if(::setsockopt(
         sock,
         SOL_SOCKET,
         SO_REUSEADDR,
-        reinterpret_cast<int*>(1),
+        &x,
         sizeof(int)) != 0)
         WARNING_LOG("Socket setsockopt(SO_REUSEADDR, 1) error on fd " \
                 << sock << ": " << strerror(errno))
