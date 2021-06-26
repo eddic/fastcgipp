@@ -136,7 +136,7 @@ namespace Fastcgipp
                     int messageType=5432,
                     unsigned retryInterval=30);
 
-            ~Connection();
+            virtual ~Connection();
 
             Connection():
                 m_initialized(false)

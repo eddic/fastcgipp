@@ -94,7 +94,7 @@ namespace Fastcgipp
                 close();
                 return std::move(m_data);
             }
-
+            virtual ~Email_base() = default;
         protected:
             //! %Email message data
             DataRef m_data;
@@ -132,6 +132,7 @@ namespace Fastcgipp
 
         public:
             Email();
+            ~Email() override = default;
 
             //! Set the to address
             void to(const std::basic_string<charT>& address);

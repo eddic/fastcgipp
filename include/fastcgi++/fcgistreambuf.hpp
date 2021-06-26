@@ -60,7 +60,7 @@ namespace Fastcgipp
             this->setp(m_buffer, m_buffer+s_buffSize);
         }
 
-        ~FcgiStreambuf()
+        virtual ~FcgiStreambuf()
         {
             emptyBuffer();
         }

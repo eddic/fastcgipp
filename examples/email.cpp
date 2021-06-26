@@ -7,7 +7,7 @@ class EmailSender: public Fastcgipp::Request<wchar_t>
 
     inline bool send();
 
-    bool response()
+    virtual bool response()
     {
         out <<
 L"Content-Type: text/html; charset=utf-8\r\n\r\n"

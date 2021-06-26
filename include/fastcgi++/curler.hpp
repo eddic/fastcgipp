@@ -87,7 +87,7 @@ namespace Fastcgipp
         //! Queue up an curl
         void queue(Curl_base& curl);
 
-        ~Curler();
+        virtual ~Curler();
 
         //! Construct a Curler object
         /*!

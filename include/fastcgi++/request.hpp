@@ -244,7 +244,7 @@ namespace Fastcgipp
          * @param[in] bytesReceived Amount of bytes received in this FastCGI
          *                          record
          */
-        virtual void inHandler(int bytesReceived)
+        virtual void inHandler([[maybe_unused]] int bytesReceived)
         {}
 
         //! Process custom POST data

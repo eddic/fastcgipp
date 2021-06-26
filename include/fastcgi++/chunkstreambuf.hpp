@@ -86,7 +86,7 @@ namespace Fastcgipp
         //! Empty/flush the buffer
         bool emptyBuffer();
 
-        ~ChunkStreamBuf()
+        virtual ~ChunkStreamBuf()
         {
             emptyBuffer();
         }
@@ -109,7 +109,7 @@ namespace Fastcgipp
         //! Empty/flush the buffer
         bool emptyBuffer();
 
-        ~ChunkStreamBuf()
+        virtual ~ChunkStreamBuf()
         {
             emptyBuffer();
         }

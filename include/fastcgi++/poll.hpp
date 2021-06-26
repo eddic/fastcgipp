@@ -169,7 +169,7 @@ namespace Fastcgipp
         Result poll(int timeout);
 
         Poll();
-        ~Poll();
+        virtual ~Poll();
     };
 }
 
