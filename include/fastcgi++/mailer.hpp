@@ -107,7 +107,7 @@ namespace Fastcgipp
                     const unsigned short port=25,
                     unsigned retryInterval=30);
 
-            ~Mailer();
+            virtual ~Mailer();
 
             Mailer():
                 m_initialized(false),

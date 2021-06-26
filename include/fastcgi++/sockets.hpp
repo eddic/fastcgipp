@@ -225,7 +225,7 @@ namespace Fastcgipp
         }
 
         //! Calls close() on the socket if we are destructing the original
-        ~Socket();
+        virtual ~Socket();
 
         //! Returns true if this socket is still open and capable of read/write.
         bool valid() const
@@ -268,7 +268,7 @@ namespace Fastcgipp
     public:
         SocketGroup();
 
-        ~SocketGroup();
+        virtual ~SocketGroup();
 
         //! Listen to the default Fastcgi socket
         /*!
