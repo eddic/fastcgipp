@@ -49,7 +49,9 @@ namespace Fastcgipp
         typedef double DOUBLE_PRECISION;
         typedef std::string TEXT;
         typedef std::wstring WTEXT;
-        typedef std::chrono::year_month_day DATE;
+        typedef std::chrono::time_point<
+                std::chrono::system_clock,
+                std::chrono::days> DATE;
         typedef std::chrono::time_point<
                 std::chrono::system_clock,
                 std::chrono::microseconds> TIMESTAMPTZ;

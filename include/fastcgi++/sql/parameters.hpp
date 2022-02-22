@@ -166,7 +166,7 @@ namespace Fastcgipp
             static BIGINT convert(const TIMESTAMPTZ& x)
             {
                 using namespace std::chrono;
-                constexpr TIMESTAMPTZ epoch(sys_days{January/1/2000});
+                constexpr TIMESTAMPTZ epoch(TIMESTAMPTZ() + seconds(946684800));
                 return (x-epoch).count();
             }
 
@@ -193,9 +193,8 @@ namespace Fastcgipp
             static INTEGER convert(const DATE& x)
             {
                 using namespace std::chrono;
-                constexpr time_point<system_clock, days> epoch(
-                        sys_days{January/1/2000});
-                return (sys_days(x)-epoch).count();
+                constexpr DATE epoch(DATE() + days(10957));
+                return (x-epoch).count();
             }
 
         public:

@@ -150,7 +150,7 @@ template<> void Results_base::field<TIMESTAMPTZ>(
           TIMESTAMPTZ& value) const
 {
     using namespace std::chrono;
-    constexpr TIMESTAMPTZ epoch(sys_days{January/1/2000});
+    constexpr TIMESTAMPTZ epoch(TIMESTAMPTZ() + seconds(946684800));
     const microseconds microseconds(
         BigEndian<BIGINT>::read(PQgetvalue(
                 reinterpret_cast<const PGresult*>(m_res),
@@ -165,7 +165,7 @@ template<> void Results_base::field<DATE>(
           DATE& value) const
 {
     using namespace std::chrono;
-    constexpr time_point<system_clock, days> epoch(sys_days{January/1/2000});
+    constexpr DATE epoch(DATE() + days(10957));
     const days days(
         BigEndian<INTEGER>::read(PQgetvalue(
                 reinterpret_cast<const PGresult*>(m_res),
