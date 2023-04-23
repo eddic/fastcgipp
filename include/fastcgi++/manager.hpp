@@ -70,7 +70,7 @@ namespace Fastcgipp
          */
         Manager_base(unsigned threads);
 
-        ~Manager_base();
+        virtual ~Manager_base();
 
         //! Call from any thread to terminate the Manager
         /*!

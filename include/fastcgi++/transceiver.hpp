@@ -116,7 +116,7 @@ namespace Fastcgipp
                 const std::function<void(Protocol::RequestId, Message&&)>
                 sendMessage);
 
-        ~Transceiver();
+        virtual ~Transceiver();
 
         //! Listen to the default Fastcgi socket
         /*!
